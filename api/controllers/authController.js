@@ -53,10 +53,7 @@ export const google = async (req, res, next) => {
         const user = await User.findOne({ email: req.body.email });
 
         if (user) {
-            const token = jwt.sign(
-                { id: user._id },
-                process.env.JWT_SECRET
-            );
+            const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
             const { password: hashedPassword, ...rest } = user._doc;
 
             const expiryDate = new Date(Date.now() + 3600 * 1000);
@@ -91,6 +88,16 @@ export const google = async (req, res, next) => {
                 .status(200)
                 .json(rest);
         }
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const signout = async (req, res, next) => {
+    try {
+        res.clearCookie("access_token")
+            .status(200)
+            .json("Signout successfully");
     } catch (error) {
         next(error);
     }
