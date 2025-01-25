@@ -22,24 +22,36 @@ export default function Profile() {
         }
     }, [image]);
 
-    const handleFileUpload = async (image) => {
+    const handleFileUpload = (image) => {
         const storage = getStorage(app);
         const fileName = new Date().getTime() + image.name;
         const storageRef = ref(storage, fileName);
         const uploadTask = uploadBytesResumable(storageRef, image);
-        uploadTask.on("state_changed", (snapshot) => {
-            const progress =
-                (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            setImagePercentage(Math.round(progress));
+
+        uploadTask.on(
+            "state_changed",
+            (snapshot) => {
+                // Handle progress
+                const progress =
+                    (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                setImagePercentage(Math.round(progress));
+            },
             (error) => {
+                // Handle error
+                console.error("Error during upload:", error);
                 setImageError(true);
-            };
+            },
             () => {
+                // Handle success and get download URL
                 getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-                    setFormData({ ...formData, profileImg: downloadURL });
+                    setFormData((prevData) => ({
+                        ...prevData,
+                        profileImg: downloadURL,
+                    }));
+                    setImageError(false); // Reset error state
                 });
-            };
-        });
+            }
+        );
     };
 
     return (
@@ -54,7 +66,7 @@ export default function Profile() {
                     onChange={(e) => setImage(e.target.files[0])}
                 />
                 <img
-                    src={currentUser.profileImg}
+                    src={formData.profileImg || currentUser.profileImg}
                     alt="profile"
                     className="h-24 w-24 self-center cursor-pointer rounded-full object-cover mt-2"
                     onClick={() => fileRef.current.click()}
